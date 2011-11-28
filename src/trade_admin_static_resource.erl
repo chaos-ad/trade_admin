@@ -9,7 +9,10 @@
 -include_lib("webmachine/include/webmachine.hrl").
 
 init(Opts) ->
-    {ok, #context{root=proplists:get_value(root, Opts)}}.
+    {ok, App} = application:get_application(),
+    PrivDir = code:priv_dir(App),
+    RootDir = PrivDir ++ "/" ++ proplists:get_value(root, Opts, []),
+    {ok, #context{root=RootDir}}.
 
 content_types_provided(RD, Context) ->
     Path = wrq:disp_path(RD),
@@ -18,6 +21,7 @@ content_types_provided(RD, Context) ->
 
 resource_exists(RD, Context=#context{root=Root}) ->
     FP = filename:join([Root|clean_path(wrq:disp_path(RD))]),
+    lager:debug("Static file request: ~p~n", [FP]),
     case filelib:is_regular(FP) of
         true ->
             {true, RD, Context#context{filepath=FP}};

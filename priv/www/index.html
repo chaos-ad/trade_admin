@@ -8,7 +8,7 @@
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
         <script type="text/javascript">
         $(function() {
-            $.getJSON('http://localhost:8000/api/history?symbol=GAZP&period=60&from=20110101', function(data) {
+            $.getJSON('http://localhost:8000/api/history?symbol=GAZP&period=60&from=01-01-2011', function(data) {
 
                 // split the data set into ohlc and volume
                 var ohlc = [],
