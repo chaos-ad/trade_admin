@@ -1,0 +1,18 @@
+%%-*- mode: erlang -*-
+{application, trade_admin,
+ [
+  {description, "trade_admin"},
+  {vsn, "1"},
+  {modules, []},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  inets,
+                  crypto,
+                  mochiweb,
+                  webmachine
+                 ]},
+  {mod, { trade_admin_app, []}},
+  {env, []}
+ ]}.
