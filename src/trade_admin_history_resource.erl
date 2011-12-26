@@ -29,7 +29,7 @@ get_history(Symbol, Period, Mode, From, To) ->
 
 jsonize(Mode, History) when is_list(History) ->
     Format = make_format(Mode),
-    "[\n" ++ string:join([jsonize(Mode, Format, Bar) || Bar <- History], ",\n") ++ "\n]".
+    "[" ++ string:join([jsonize(Mode, Format, Bar) || Bar <- History], ",") ++ "]".
 
 jsonize(Mode, Format, Bar) when is_tuple(Bar) ->
     lists:flatten(io_lib:format(Format, make_args(Mode, Bar))).

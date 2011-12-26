@@ -1,0 +1,21 @@
+<html>
+<html>
+    <head>
+        <title>Strategies</title>
+    </head>
+    <body>
+        <h1>Strategies:</h1>
+        <table border="1" width="50%" cellpadding="5">
+            <tr align="center">
+                <th>strategy</th>
+                <th>status</th>
+            </tr>
+            {% for name, status in strategies %}
+            <tr>
+                <td><a href="{{name}}">{{name}}</a></td>
+                <td>{{status}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>

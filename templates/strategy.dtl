@@ -1,0 +1,21 @@
+<html>
+<html>
+    <head>
+        <title>Strategy {{name}}</title>
+    </head>
+    <body>
+        <h1>Strategy {{name}}</h1>
+        <table border="1" width="50%" cellpadding="5">
+            <tr align="center">
+                <th>key</th>
+                <th>value</th>
+            </tr>
+            {% for key, val in stats %}
+            <tr>
+                <td>{{key}}</td>
+                <td>{{val}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>
