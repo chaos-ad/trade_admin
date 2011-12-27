@@ -41,17 +41,31 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Ip = case os:getenv("WEBMACHINE_IP") of false -> "0.0.0.0"; Any -> Any end,
+    Port = get_env(port, 8080),
+    Host = get_env(host, "0.0.0.0"),
+    Logs = get_env(logs, "priv/logs"),
+
+    application:set_env(webmachine, webmachine_logger_module, webmachine_logger),
+
     {ok, Dispatch} = file:consult(filename:join(
                          [filename:dirname(code:which(?MODULE)),
                           "..", "priv", "dispatch.conf"])),
+
     WebConfig = [
-                 {ip, Ip},
-                 {port, 8000},
-                 {log_dir, "priv/logs"},
+                 {ip, Host},
+                 {port, Port},
+                 {log_dir, Logs},
                  {dispatch, Dispatch}],
+
     Web = {webmachine_mochiweb,
            {webmachine_mochiweb, start, [WebConfig]},
            permanent, 5000, worker, dynamic},
     Processes = [Web],
     {ok, { {one_for_one, 10, 10}, Processes} }.
+
+
+get_env(Name, Default) ->
+    case application:get_env(Name) of
+        {ok, Env} -> Env;
+        _         -> Default
+    end.
