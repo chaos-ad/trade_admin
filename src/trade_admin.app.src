@@ -2,7 +2,7 @@
 {application, trade_admin,
  [
   {description, "trade_admin"},
-  {vsn, "1"},
+  {vsn, "0.1"},
   {modules, []},
   {registered, []},
   {applications, [
