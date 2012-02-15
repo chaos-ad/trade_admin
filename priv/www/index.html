@@ -5,57 +5,33 @@
         <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.js"></script>
         <script type="text/javascript">
             $(function() {
-                var chart = new Highcharts.StockChart({
+                $.getJSON('http://localhost:8080/tester?strategy=ai&symbol=LKOH&period=60&from=01-01-2011&to=01-01-2012', function(data) {
+                    var bids    = data.bids;
+                    var history = data.history;
 
-                    chart: {
-                        renderTo: 'container',
-                        events: {
-                            addSeries: function() {
-                                alert ('A series was added');
-                            }
-                        }
-                    },
-
-                    rangeSelector: {
-                        selected: 1
-                    },
-
-                    series: [{
-                        name: 'MSFT',
-                        data: MSFT
-                    }]
-                });
-
-
-                // activate the button
-                $('#button1').click(function() {
-                    chart.addSeries({
-                        name: 'ADBE1',
-                        data: ADBE
-                    });
-
-                    $('#button1').unbind('click');
-                });
-
-                // activate the button
-                $('#button2').click(function() {
-                    $.getJSON('http://localhost:8000/api/history?symbol=GAZP&period=60&from=01-01-2011&mode=tc', function(GAZP) {
-                        chart.addSeries({
-                            name: 'GAZP',
-                            data: GAZP
-                        });
-                        $('#button2').unbind('click');
+                    // create the chart
+                    chart = new Highcharts.StockChart({
+                        chart : {
+                            renderTo : 'container'
+                        },
+                        rangeSelector : {
+                            selected : 1
+                        },
+                        series : [{
+                            type : 'candlestick',
+                            data : data.history.map(function(item) { return [item.time + "000", item.open, item.high, item.low, item.close]; }),
+                        }]
                     });
                 });
             });
+
         </script>
     </head>
     <body>
         <div id="container" style="height: 400px; min-width: 600px"></div>
-
+<!--
         <button id="button1">Add series 1</button>
-        <button id="button2">Add series 2</button>
-
+        <button id="button2">Add series 2</button>-->
 
         <script type="text/javascript" src="/js/highstock.src.js"></script>
         <script type="text/javascript" src="/js/modules/exporting.src.js"></script>
