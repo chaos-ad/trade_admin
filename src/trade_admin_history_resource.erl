@@ -18,13 +18,13 @@ to_json(ReqData, State) ->
 get_history(Symbol, Period, From, undefined) ->
     T1 = edate:string_to_date(From),
     Data = trade_history:get_history(Symbol, list_to_integer(Period), T1),
-    json:decode( lists:map(fun jsonize/1, Data) );
+    {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ), JSON;
 
 get_history(Symbol, Period, From, To) ->
     T1 = edate:string_to_date(From),
     T2 = edate:string_to_date(To),
     Data = trade_history:get_history(Symbol, list_to_integer(Period), T1, T2),
-    json:decode( lists:map(fun jsonize/1, Data) ).
+    {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ), JSON.
 
 jsonize({T,O,H,L,C,V}) ->
     {[{time, T}, {open, O}, {high, H}, {low, L}, {close, C}, {volume, V}]}.
