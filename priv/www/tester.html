@@ -1,0 +1,148 @@
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.js"></script>
+        <script type="text/javascript">
+
+            function make_bar(item) {
+                return [item.time + "000", item.open, item.high, item.low, item.close];
+            };
+
+            function make_price(item) {
+                return [item.time + "000", item.close];
+            };
+
+            function make_bid(item) {
+                return { x: item.time + "000", title: item.type };
+            };
+
+            function parse_qs() {
+                var nvpair = {};
+                var qs = window.location.search.replace('?', '');
+                var pairs = qs.split('&');
+                $.each(pairs, function(i, v){
+                    var pair = v.split('=');
+                    nvpair[pair[0]] = pair[1];
+                });
+                return nvpair;
+            };
+
+            $(function() {
+                var query = parse_qs();
+                var url = "/api/tester?" + jQuery.param(query);
+                $.getJSON(url, function(data) {
+                    var bids = data.bids.map(make_bid);
+                    var history = data.history.map(make_bar);
+
+                    // create the chart
+                    chart = new Highcharts.StockChart({
+                        chart : {
+                            renderTo : 'container',
+                            zoomType: 'x'
+                        },
+                        rangeSelector: {
+                            buttons: [{
+                                type: 'minute',
+                                count: 1,
+                                text: '1M'
+                            }, {
+                                type: 'minute',
+                                count: 5,
+                                text: '5M'
+                            }, {
+                                type: 'minute',
+                                count: 15,
+                                text: '15M'
+                            }, {
+                                type: 'minute',
+                                count: 30,
+                                text: '30M'
+                            }, {
+                                type: 'hour',
+                                count: 1,
+                                text: '1H'
+                            }, {
+                                type: 'hour',
+                                count: 4,
+                                text: '4H'
+                            }, {
+                                type: 'day',
+                                count: 1,
+                                text: '1D'
+                            }, {
+                                type: 'week',
+                                count: 1,
+                                text: '1W'
+                            }, {
+                                type: 'month',
+                                count: 1,
+                                text: '1MN'
+                            }, {
+                                type: 'month',
+                                count: 6,
+                                text: '6MN'
+                            }, {
+                                type: 'year',
+                                count: 1,
+                                text: '1Y'
+                            }, {
+                                type: 'all',
+                                text: 'All'
+                            }],
+                            selected: 12
+                        },
+                        dataGrouping : {
+                            units: [[
+                                'millisecond', // unit name
+                                [1, 2, 5, 10, 20, 25, 50, 100, 200, 500] // allowed multiples
+                            ], [
+                                'second',
+                                [1, 2, 5, 10, 15, 30]
+                            ], [
+                                'minute',
+                                [1, 2, 5, 10, 15, 30]
+                            ], [
+                                'hour',
+                                [1, 2, 3, 4, 6, 8, 12]
+                            ], [
+                                'day',
+                                [1]
+                            ], [
+                                'week',
+                                [1]
+                            ], [
+                                'month',
+                                [1, 3, 6]
+                            ], [
+                                'year',
+                                null
+                            ]]
+                        },
+                        series : [{
+                            type: 'candlestick',
+                            data: history,
+                            id: 'history',
+                            shadow : true,
+                            tooltip : {
+                                yDecimals : 2
+                            }
+                        }/*, {
+                            type: 'flags',
+                            data: bids,
+                            onSeries: 'history',
+                            shape: 'squarepin'
+                        }*/]
+                    });
+                });
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="container" style="height: 400px; min-width: 600px"></div>
+        <script type="text/javascript" src="/js/highstock.src.js"></script>
+        <script type="text/javascript" src="/js/modules/exporting.src.js"></script>
+        <script type="text/javascript" src="http://www.highcharts.com/samples/data/three-series-1000-points.js"></script>
+    </body>
+</html>

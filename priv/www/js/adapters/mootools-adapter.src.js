@@ -1,5 +1,5 @@
 /**
- * @license Highstock JS v1.0.2 (2011-11-08)
+ * @license Highstock JS v1.1.4 (2012-02-15)
  * MooTools adapter
  *
  * (c) 2010-2011 Torstein Hønsi
@@ -87,7 +87,7 @@ win.HighchartsAdapter = {
 				el.attr.call(el, args[0], args[1][0]);
 			};
 			// dirty hack to trick Moo into handling el as an element wrapper
-			el.$family = el.uid = true;
+			el.$family = function () { return true; };
 		}
 
 		// stop running animations
@@ -100,6 +100,11 @@ win.HighchartsAdapter = {
 				transition: Fx.Transitions.Quad.easeInOut
 			}, options)
 		);
+
+		// Make sure that the element reference is set when animating svg elements
+		if (isSVGElement) {
+			effect.element = el;
+		}
 
 		// special treatment for paths
 		if (params.d) {
@@ -125,7 +130,7 @@ win.HighchartsAdapter = {
 	each: function (arr, fn) {
 		return legacy ?
 			$each(arr, fn) :
-			arr.each(fn);
+			Array.each(arr, fn);
 	},
 
 	/**
@@ -169,6 +174,17 @@ win.HighchartsAdapter = {
 		}
 
 		return ret;
+	},
+
+	/**
+	 * Get the offset of an element relative to the top left corner of the web page
+	 */
+	offset: function (el) {
+		var offsets = $(el).getOffsets();
+		return {
+			left: offsets.x,
+			top: offsets.y
+		};
 	},
 
 	/**
