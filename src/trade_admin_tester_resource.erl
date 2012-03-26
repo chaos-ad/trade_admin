@@ -10,11 +10,11 @@ content_types_provided(ReqData, State) ->
     {[{"application/json", to_json}], ReqData, State}.
 
 to_json(ReqData, State) ->
-    Strategy    = list_to_atom( wrq:get_qs_value("strategy",  ReqData) ),
-    Symbol      = wrq:get_qs_value("symbol", ReqData),
-    Period      = list_to_integer( wrq:get_qs_value("period", ReqData) ),
-    From        = str_to_date( wrq:get_qs_value("from", ReqData) ),
-    To          = str_to_date( wrq:get_qs_value("to", ReqData) ),
+    Strategy    = get_value("strategy", ReqData, atom),
+    Symbol      = get_value("symbol", ReqData),
+    Period      = get_value("period", ReqData, integer),
+    From        = get_value("from", ReqData, date),
+    To          = get_value("to", ReqData, date),
     Stats       = run_test(Strategy, Symbol, Period, From, To),
     {jsonize(Stats), ReqData, State}.
 
@@ -44,9 +44,6 @@ run_test(Strategy, Symbol, Period, From, To) ->
         ]
     ).
 
-str_to_date(undefined) -> undefined;
-str_to_date(Date) -> edate:string_to_date(Date).
-
 jsonize({buy, {Time,Lots,  Price}}) ->
     {[{type, buy},  {lots, Lots}, {time, Time}, {price, Price}]};
 
@@ -61,3 +58,25 @@ jsonize(Stats) ->
     Hist = trade_stats:get_history(Stats),
     Data = {[{bids, lists:map(fun jsonize/1, Bids)}, {history, lists:map(fun jsonize/1, Hist)}]},
     {ok, JSON} = json:encode(Data), JSON.
+
+
+get_value(Name, Request) ->
+    wrq:get_qs_value(Name, Request).
+
+get_value(Name, Request, integer) ->
+    case get_value(Name, Request) of
+        Val when is_list(Val) -> list_to_integer(Val);
+        _                     -> undefined
+    end;
+
+get_value(Name, Request, atom) ->
+    case get_value(Name, Request) of
+        Val when is_list(Val) -> list_to_atom(Val);
+        _                     -> undefined
+    end;
+
+get_value(Name, Request, date) ->
+    case get_value(Name, Request) of
+        Val when is_list(Val) -> edate:string_to_date(Val);
+        _                     -> undefined
+    end.
