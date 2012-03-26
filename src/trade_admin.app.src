@@ -10,7 +10,7 @@
                   stdlib,
                   inets,
                   crypto,
-                  lager
+                  lager,
                   mochiweb,
                   webmachine,
                  ]},
