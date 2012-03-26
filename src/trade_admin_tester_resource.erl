@@ -18,6 +18,10 @@ to_json(ReqData, State) ->
     Stats       = run_test(Strategy, Symbol, Period, From, To),
     {jsonize(Stats), ReqData, State}.
 
+run_test(Strategy, undefined, undefined, undefined, undefined) ->
+    lager:debug("starting test from web interface: strategy: ~p", [Strategy]),
+    Strategy:run();
+
 run_test(Strategy, Symbol, Period, From, To) ->
     lager:debug("starting test from web interface: strategy: ~p, symbol = ~p, period = ~p, from = ~p, to = ~p", [Strategy, Symbol, Period, From, To]),
     trade_tester:test
