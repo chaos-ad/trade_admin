@@ -10,8 +10,9 @@
                   stdlib,
                   inets,
                   crypto,
+                  lager
                   mochiweb,
-                  webmachine
+                  webmachine,
                  ]},
   {mod, { trade_admin_app, []}},
   {env, []}
