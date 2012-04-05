@@ -1,0 +1,79 @@
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.js"></script>
+        <script type="text/javascript">
+
+            function make_bar(item) {
+                return [item.time * 1000, item.open, item.high, item.low, item.close];
+            };
+
+            function make_val(item) {
+                return [item.time * 1000, item.value];
+            };
+
+            function parse_qs() {
+                var nvpair = {};
+                var qs = window.location.search.replace('?', '');
+                var pairs = qs.split('&');
+                $.each(pairs, function(i, v){
+                    var pair = v.split('=');
+                    nvpair[pair[0]] = pair[1];
+                });
+                return nvpair;
+            };
+
+            $(function() {
+                var query = parse_qs();
+                var series_options = [];
+
+                var history_url = "/api/history?" + jQuery.param(query);
+                var history_ready = false;
+
+                var indicator_url = "/api/indicators?" + jQuery.param(query);
+                var indicator_ready = false;
+
+                $.getJSON(history_url, function(data) {
+                    series_options[0] = {
+                        data: data.map(make_bar),
+                        name: query.symbol,
+                        type: 'candlestick',
+                        shadow : true,
+                        tooltip : {yDecimals : 2}
+                    }
+                    history_ready = true;
+                    if(indicator_ready) {
+                        createChart();
+                    }
+                });
+
+                $.getJSON(indicator_url, function(data) {
+                    series_options[1] = {
+                        data: data.map(make_val),
+                        name: query.name
+                    }
+                    indicator_ready = true;
+                    if(history_ready) {
+                        createChart();
+                    }
+                });
+
+
+                function createChart() {
+                    chart = new Highcharts.StockChart({
+                        chart : {
+                            renderTo : 'container'
+                        },
+                        series : series_options
+                    });
+                }
+            });
+
+        </script>
+    </head>
+    <body>
+        <div id="container" style="height: 400px; min-width: 600px"></div>
+        <script type="text/javascript" src="/js/highstock.src.js"></script>
+    </body>
+</html>
