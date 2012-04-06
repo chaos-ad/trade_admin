@@ -1,5 +1,5 @@
 /**
- * @license Highstock JS v1.1.4 (2012-02-15)
+ * @license Highstock JS v1.1.5 (2012-03-15)
  * Prototype adapter
  *
  * @author Michael Nelson, Torstein Hønsi.
@@ -9,7 +9,7 @@
  */
 
 // JSLint options:
-/*global Effect, Class, Event, $, $A */
+/*global Effect, Class, Event, Element, $, $$, $A */
 
 // Adapter interface between prototype and the Highcharts charting library
 var HighchartsAdapter = (function () {
@@ -102,6 +102,19 @@ return {
 	},
 
 	/**
+	 * Downloads a script and executes a callback when done.
+	 * @param {String} scriptLocation
+	 * @param {Function} callback
+	 */
+	getScript: function (scriptLocation, callback) {
+		var head = $$('head')[0]; // Returns an array, so pick the first element.
+		if (head) {
+			// Append a new 'script' element, set its type and src attributes, add a 'load' handler that calls the callback
+			head.appendChild(new Element('script', { type: 'text/javascript', src: scriptLocation}).observe('load', callback));
+		}
+	},
+
+	/**
 	 * Custom events in prototype needs to be namespaced. This method adds a namespace 'h:' in front of
 	 * events that are not recognized as native.
 	 */
@@ -133,6 +146,7 @@ return {
 		options = options || {};
 		options.delay = 0;
 		options.duration = (options.duration || 500) / 1000;
+		options.afterFinish = options.complete;
 
 		// animate wrappers and DOM elements
 		if (hasEffect) {
@@ -142,8 +156,13 @@ return {
 				fx = new Effect.HighchartsTransition($(el), key, params[key], options);
 			}
 		} else {
-			for (key in params) {
-				el.attr(key, params[key]);
+			if (el.attr) { // #409 without effects
+				for (key in params) {
+					el.attr(key, params[key]);
+				}
+			}
+			if (options.complete) {
+				options.complete();
 			}
 		}
 
@@ -168,7 +187,7 @@ return {
 	each: function (arr, fn) {
 		$A(arr).each(fn);
 	},
-	
+
 	/**
 	 * Get the cumulative offset relative to the top left of the page. This method, unlike its
 	 * jQuery and MooTools counterpart, still suffers from issue #208 regarding the position
