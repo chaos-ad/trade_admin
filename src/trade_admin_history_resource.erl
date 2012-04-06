@@ -9,22 +9,19 @@ content_types_provided(ReqData, State) ->
     {[{"application/json", to_json}], ReqData, State}.
 
 to_json(ReqData, State) ->
-    Symbol = wrq:get_qs_value("symbol", ReqData),
-    Period = wrq:get_qs_value("period", ReqData),
-    From   = wrq:get_qs_value("from", ReqData),
-    To     = wrq:get_qs_value("to", ReqData),
-    {get_history(Symbol, Period, From, To), ReqData, State}.
 
-get_history(Symbol, Period, From, undefined) ->
-    T1 = edate:string_to_date(From),
-    Data = trade_history:get_history(Symbol, list_to_integer(Period), T1),
-    {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ), JSON;
+    {[Seq, Period, From, To], _} = trade_admin_utils:get_args([
+        {"seq", required},
+        {"period", integer, required},
+        {"from", date, required},
+        {"to", date, optional}],
+        wrq:req_qs(ReqData)
+    ),
 
-get_history(Symbol, Period, From, To) ->
-    T1 = edate:string_to_date(From),
-    T2 = edate:string_to_date(To),
-    Data = trade_history:get_history(Symbol, list_to_integer(Period), T1, T2),
-    {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ), JSON.
+    lager:debug("Getting history for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Seq, Period, From, To]),
+    Data = trade_history:get_history(Seq, Period, From, To),
+    {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ),
+    {JSON, ReqData, State}.
 
 jsonize({T,O,H,L,C,V}) ->
     {[{time, T}, {open, O}, {high, H}, {low, L}, {close, C}, {volume, V}]}.

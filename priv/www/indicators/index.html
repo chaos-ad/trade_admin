@@ -1,0 +1,244 @@
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Indicators</title>
+    </head>
+
+    <body>
+        <div class="controls">
+
+            <label for="to">Рынок:</label>
+            <select id="markets"></select>
+
+            <label for="to">Бумага:</label>
+            <select id="securities"></select>
+
+            <label for="from">Период:</label>
+            <input type="text" id="from" name="from"/>
+
+            <label for="to">-</label>
+            <input type="text" id="to" name="to"/>
+
+            <label for="to">Таймфрейм:</label>
+            <select id="periods"></select>
+
+            <input type="button" id="go" name="go" value="Go"/>
+
+            <hr />
+        </div>
+
+        <div id="charts" style="height: 400px; min-width: 600px"></div>
+    </body>
+</html>
+
+
+<link rel="stylesheet" href="/css/jquery-ui-1.8.18.custom.css" type="text/css" media="all"/>
+
+<script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="/js/jquery-ui-1.8.18.custom.min.js"></script>
+<script type="text/javascript" src="/js/highstock.src.js"></script>
+
+<script>
+
+    var periods = [
+        { id: 1,     title: '1 минута' },
+        { id: 5,     title: '5 минут'  },
+        { id: 15,    title: '15 минут' },
+        { id: 30,    title: '30 минут' },
+        { id: 60,    title: '1 час'    },
+        { id: 240,   title: '4 часа'   },
+        { id: 1440,  title: '1 день'   },
+        { id: 10080, title: '1 неделя' },
+        { id: 43200, title: '1 месяц'  }
+    ];
+
+    var markets = [
+        { id: 1,     title: 'ММВБ Акции'                 },
+        { id: 200,   title: 'ММВБ-Top'                   },
+        { id: 29,    title: 'ММВБ ПИФы'                  },
+        { id: 2,     title: 'ММВБ облигации'             },
+        { id: 12,    title: 'ММВБ Внесписочные облигации'},
+        { id: 8,     title: 'АДР'                        },
+        { id: 6,     title: 'Мировые Индексы'            },
+        { id: 24,    title: 'Товары'                     },
+        { id: 5,     title: 'Forex'                      },
+        { id: 14,    title: 'Фьючерсы ФОРТС'             },
+        { id: 3,     title: 'РТС'                        },
+        { id: 38,    title: 'RTS Standard'               },
+        { id: 20,    title: 'RTS Board'                  },
+        { id: 10,    title: 'РТС-GAZ'                    },
+        { id: 25,    title: 'Акции США(BATS)'            },
+        { id: 7,     title: 'Фьючерсы США'               },
+        { id: 27,    title: 'Отрасли экономики США'      },
+        { id: 26,    title: 'Гособлигации США'           },
+        { id: 28,    title: 'ETF'                        },
+        { id: 30,    title: 'Индексы мировой экономики'  },
+        { id: 17,    title: 'ФОРТС Архив'                },
+        { id: 31,    title: 'Сырье Архив'                },
+        { id: 16,    title: 'ММВБ Архив'                 },
+        { id: 18,    title: 'РТС Архив'                  },
+        { id: 9,     title: 'СПФБ Архив'                 },
+        { id: 39,    title: 'АДР Архив'                  }
+    ];
+
+    var securities = [];
+
+    $.getJSON("/api/securities/all", function(data) {
+        securities = data;
+
+        $(function() {
+            $.each(periods, function (i, period) {
+                $('<option value="' + period.id + '">' + period.title + '</option>').appendTo($("#periods"));
+            });
+            $("#periods [value='60']").attr("selected", "selected");
+
+            $.each(markets, function (i, market) {
+                var id = market.id;
+                $('<option value="' + market.id + '">' + market.title + '</option>').appendTo($("#markets"));
+            });
+            $("#markets [value='14']").attr("selected", "selected");
+
+            $("#go").click(loadIndicator);
+            $("#markets").change(chooseMarket).change();
+
+            $("#securities [value='SPFB.RTS']").first().attr("selected", "selected");
+        });
+
+        function chooseMarket() {
+            var market = $(this).val();
+            var security_list = $("#securities");
+            security_list.empty();
+            $.each(securities, function (i, security) {
+                if (security.market == market) {
+                    $('<option value="' + security.code + '">' + security.name + '</option>').appendTo(security_list);
+                }
+            });
+        }
+    });
+
+    $(function() {
+        var dates = $( "#from, #to" ).datepicker({
+            maxDate: "-1d",
+            gotoCurrent:true,
+            changeYear: true,
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            onSelect: function( selectedDate ) {
+                var option = this.id == "from" ? "minDate" : "maxDate",
+                    instance = $( this ).data( "datepicker" ),
+                    date = $.datepicker.parseDate(
+                        instance.settings.dateFormat ||
+                        $.datepicker._defaults.dateFormat,
+                        selectedDate, instance.settings );
+                dates.not( this ).datepicker( "option", option, date );
+            }
+        });
+        var to = new Date(); to.setDate(to.getDate() - 1);
+        var from = new Date(to); from.setFullYear(from.getFullYear() - 1);
+        $("#to").datepicker('setDate', to);
+        $("#from").datepicker('setDate', from);
+    });
+
+    function make_bar(item) {
+        return [item.time * 1000, item.open, item.high, item.low, item.close];
+    };
+
+    function make_val(item) {
+        return [item.time * 1000, item.value];
+    };
+
+    function loadIndicator() {
+        var query = {
+            seq:      $("#securities").val(),
+            period:   $("#periods").val(),
+            to:       $("#to").val(),
+            from:     $("#from").val()
+        };
+        var history_url = "/api/history?" + jQuery.param(query);
+        $.getJSON(history_url, function(data) {
+            chart = new Highcharts.StockChart({
+                chart : {
+                    renderTo : 'charts'
+                },
+                series : [{
+                    data: data.map(make_bar),
+                    name: query.symbol,
+                    type: 'candlestick',
+                    shadow : true,
+                    tooltip : {yDecimals : 2}
+                }]
+            });
+        });
+    }
+
+
+</script>
+
+<!--<script type="text/javascript">
+    function make_bar(item) {
+        return [item.time * 1000, item.open, item.high, item.low, item.close];
+    };
+
+    function make_val(item) {
+        return [item.time * 1000, item.value];
+    };
+
+    function parse_qs() {
+        var nvpair = {};
+        var qs = window.location.search.replace('?', '');
+        var pairs = qs.split('&');
+        $.each(pairs, function(i, v){
+            var pair = v.split('=');
+            nvpair[pair[0]] = pair[1];
+        });
+        return nvpair;
+    };
+
+    $(function() {
+        var query = parse_qs();
+        var series_options = [];
+
+        var history_url = "/api/history?" + jQuery.param(query);
+        var history_ready = false;
+
+        var indicator_url = "/api/indicators?" + jQuery.param(query);
+        var indicator_ready = false;
+
+        $.getJSON(history_url, function(data) {
+            series_options[0] = {
+                data: data.map(make_bar),
+                name: query.symbol,
+                type: 'candlestick',
+                shadow : true,
+                tooltip : {yDecimals : 2}
+            }
+            history_ready = true;
+            if(indicator_ready) {
+                createChart();
+            }
+        });
+
+        $.getJSON(indicator_url, function(data) {
+            series_options[1] = {
+                data: data.map(make_val),
+                name: query.name
+            }
+            indicator_ready = true;
+            if(history_ready) {
+                createChart();
+            }
+        });
+
+
+        function createChart() {
+            chart = new Highcharts.StockChart({
+                chart : {
+                    renderTo : 'charts'
+                },
+                series : series_options
+            });
+        }
+    });
+</script>-->

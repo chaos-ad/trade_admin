@@ -11,9 +11,9 @@ content_types_provided(ReqData, State) ->
 
 to_json(ReqData, State) ->
     try
-        {[Name, Symbol, Period, From, To], OtherArgs} = trade_admin_utils:get_args([
+        {[Seq, Name, Period, From, To], OtherArgs} = trade_admin_utils:get_args([
+            {"seq", required},
             {"name", required},
-            {"symbol", required},
             {"period", integer, required},
             {"from", date, required},
             {"to", date, optional}],
@@ -21,14 +21,14 @@ to_json(ReqData, State) ->
         ),
 
         Module  = list_to_atom("trade_indicator_" ++ Name),
-        History = trade_history:get_history(Symbol, Period, From, To),
+        History = trade_history:get_history(Seq, Period, From, To),
         Data    = Module:get_data(History, OtherArgs),
 
         {ok, JSON} = json:encode(Data),
         {JSON, ReqData, State}
 
     catch
-        error:undef   -> {{halt, 400}, ReqData, State};
-        error:no_args -> {{halt, 400}, ReqData, State}
+        error:undef           -> {{halt, 400}, ReqData, State};
+        error:{absent_arg, _} -> {{halt, 400}, ReqData, State}
     end.
 

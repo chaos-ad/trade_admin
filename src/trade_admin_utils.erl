@@ -9,16 +9,16 @@ get_args(Specs, ReqQS) when is_list(ReqQS) ->
 get_arg({Name, Requiredness}, Args) ->
     case lists:keytake(Name, 1, Args) of
         {value, {Name, Val}, Rest} -> {Val, Rest};
-        false -> {no_value(Requiredness), Args}
+        false -> {no_value(Name, Requiredness), Args}
     end;
 
 get_arg({Name, Type, Requiredness}, Args) ->
     {Val, Rest} = get_arg({Name, Requiredness}, Args),
     {convert(Type, Val), Rest}.
 
-no_value(required) -> exit(no_args);
-no_value(optional) -> undefined;
-no_value({default, Default}) -> Default.
+no_value(Name, required) -> exit({absent_arg, Name});
+no_value(_, optional) -> undefined;
+no_value(_, {default, Default}) -> Default.
 
 convert(_, undefined) -> undefined;
 convert(atom, Val) when is_list(Val) -> list_to_atom(Val);
