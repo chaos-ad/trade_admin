@@ -6,8 +6,8 @@
          content_types_provided/2,
          provide_content/2]).
 
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("kernel/include/file.hrl").
+-include_lib("webmachine/include/webmachine.hrl").
 
 -record(context, {docroot,fullpath,fileinfo,response_body}).
 
@@ -43,6 +43,7 @@ maybe_fetch_object(Context, Path) ->
         undefined ->
             case file_exists(Context, Path) of
                 {true, FullPath} ->
+                    lager:debug("Serving static file ~p", [FullPath]),
                     {ok, Value} = file:read_file(FullPath),
                     {true, Context#context{response_body=Value}};
                 false ->

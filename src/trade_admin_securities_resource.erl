@@ -21,6 +21,7 @@ generate_etag(ReqData, State=#state{etag=ETag}) ->
     {ETag, ReqData, State}.
 
 to_json(ReqData, State=#state{securities=Securities}) when is_list(Securities) ->
+    lager:debug("Getting securities for market ~p", [wrq:path_info(market, ReqData)]),
     {ok, JSON} = json:encode(lists:map(fun prepare/1, Securities)),
     {JSON, ReqData, State}.
 
