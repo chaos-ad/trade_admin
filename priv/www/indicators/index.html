@@ -36,8 +36,8 @@
 
 <link rel="stylesheet" href="/css/jquery-ui-1.8.18.custom.css" type="text/css" media="all"/>
 
-<script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
-<script type="text/javascript" src="/js/jquery-ui-1.8.18.custom.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/js/highstock.js"></script>
 
 <script>
@@ -83,40 +83,39 @@
         { id: 39,    title: 'АДР Архив'                  }
     ];
 
-    var securities = [];
+    var securities = {};
 
-    $.getJSON("/api/securities/all", function(data) {
-        securities = data;
-
-        $(function() {
-            $.each(periods, function (i, period) {
-                $('<option value="' + period.id + '">' + period.title + '</option>').appendTo($("#periods"));
-            });
-            $("#periods [value='60']").attr("selected", "selected");
-
-            $.each(markets, function (i, market) {
-                var id = market.id;
-                $('<option value="' + market.id + '">' + market.title + '</option>').appendTo($("#markets"));
-            });
-            $("#markets [value='14']").attr("selected", "selected");
-
-            $("#go").click(loadIndicator);
-            $("#markets").change(chooseMarket).change();
-
-            $("#securities [value='SPFB.RTS']").first().attr("selected", "selected");
+    $(function() {
+        $.each(periods, function (i, period) {
+            $('<option value="' + period.id + '">' + period.title + '</option>').appendTo($("#periods"));
         });
+        $("#periods [value='60']").attr("selected", "selected");
 
-        function chooseMarket() {
-            var market = $(this).val();
-            var security_list = $("#securities");
-            security_list.empty();
-            $.each(securities, function (i, security) {
-                if (security.market == market) {
-                    $('<option value="' + security.code + '">' + security.name + '</option>').appendTo(security_list);
-                }
+        $.each(markets, function (i, market) {
+            var id = market.id;
+            $('<option value="' + market.id + '">' + market.title + '</option>').appendTo($("#markets"));
+        });
+        $("#markets [value='14']").attr("selected", "selected");
+
+        $("#go").click(loadIndicator);
+        $("#markets").change(chooseMarket).change();
+    });
+
+    function chooseMarket() {
+        var market = $("#markets").val();
+        if (!securities[market]) {
+            $.getJSON("/api/securities/" + market, function(data) {
+                securities[market] = data;
+                chooseMarket();
+            });
+        } else {
+            $("#securities").empty();
+            var data = securities[market];
+            $.each(data, function (i, security) {
+                $('<option value="' + security.code + '">' + security.name + '</option>').appendTo($("#securities"));
             });
         }
-    });
+    }
 
     $(function() {
         var dates = $( "#from, #to" ).datepicker({
@@ -176,70 +175,3 @@
 
 
 </script>
-
-<!--<script type="text/javascript">
-    function make_bar(item) {
-        return [item.time * 1000, item.open, item.high, item.low, item.close];
-    };
-
-    function make_val(item) {
-        return [item.time * 1000, item.value];
-    };
-
-    function parse_qs() {
-        var nvpair = {};
-        var qs = window.location.search.replace('?', '');
-        var pairs = qs.split('&');
-        $.each(pairs, function(i, v){
-            var pair = v.split('=');
-            nvpair[pair[0]] = pair[1];
-        });
-        return nvpair;
-    };
-
-    $(function() {
-        var query = parse_qs();
-        var series_options = [];
-
-        var history_url = "/api/history?" + jQuery.param(query);
-        var history_ready = false;
-
-        var indicator_url = "/api/indicators?" + jQuery.param(query);
-        var indicator_ready = false;
-
-        $.getJSON(history_url, function(data) {
-            series_options[0] = {
-                data: data.map(make_bar),
-                name: query.symbol,
-                type: 'candlestick',
-                shadow : true,
-                tooltip : {yDecimals : 2}
-            }
-            history_ready = true;
-            if(indicator_ready) {
-                createChart();
-            }
-        });
-
-        $.getJSON(indicator_url, function(data) {
-            series_options[1] = {
-                data: data.map(make_val),
-                name: query.name
-            }
-            indicator_ready = true;
-            if(history_ready) {
-                createChart();
-            }
-        });
-
-
-        function createChart() {
-            chart = new Highcharts.StockChart({
-                chart : {
-                    renderTo : 'charts'
-                },
-                series : series_options
-            });
-        }
-    });
-</script>-->
