@@ -1,6 +1,5 @@
 -module(trade_admin_securities_resource).
-
--compile(export_all).
+-export([init/1, content_types_provided/2, generate_etag/2, to_json/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 
@@ -11,9 +10,6 @@ init([]) ->
 
 content_types_provided(ReqData, State) ->
     {[{"application/json", to_json}], ReqData, State}.
-
-encodings_provided(ReqData, State) ->
-    {[{"identity", fun(X) -> X end}, {"gzip", fun zlib:gzip/1}], ReqData, State}.
 
 generate_etag(ReqData, State=#state{etag=undefined, securities=undefined}) ->
     Securities = get_securities(wrq:path_info(market, ReqData)),

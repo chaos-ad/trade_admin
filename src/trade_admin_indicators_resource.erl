@@ -20,6 +20,8 @@ to_json(ReqData, State) ->
             wrq:req_qs(ReqData)
         ),
 
+        lager:debug("Getting indicator ~p for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Name, Seq, Period, From, To]),
+
         Module  = list_to_atom("trade_indicator_" ++ Name),
         History = trade_history:get_history(Seq, Period, From, To),
         Data    = Module:get_data(History, OtherArgs),
