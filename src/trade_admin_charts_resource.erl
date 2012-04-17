@@ -32,7 +32,10 @@ to_json(ReqData, State) ->
     end.
 
 all_charts() ->
-    Files = filelib:wildcard("ebin/trade_chart_*.beam"),
+    lists:concat( [all_charts(Dir) || Dir <- code:get_path()] ).
+
+all_charts(Dir) ->
+    Files = filelib:wildcard(Dir ++ "/trade_chart_*.beam"),
     Names = lists:map(fun chart_name/1, Files),
     Names.
 
