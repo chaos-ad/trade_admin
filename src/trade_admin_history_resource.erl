@@ -9,17 +9,14 @@ content_types_provided(ReqData, State) ->
     {[{"application/json", to_json}], ReqData, State}.
 
 to_json(ReqData, State) ->
+    Args = wrq:req_qs(ReqData),
+    Security = trade_arg_utils:get_required(Args, "security"),
+    Period = trade_arg_utils:get_required(Args, "period", integer),
+    From = trade_arg_utils:get_required(Args, "from", date),
+    To = trade_arg_utils:get_optional(Args, "to", date),
 
-    {[Seq, Period, From, To], _} = trade_admin_utils:get_args([
-        {"seq", required},
-        {"period", integer, required},
-        {"from", date, required},
-        {"to", date, optional}],
-        wrq:req_qs(ReqData)
-    ),
-
-    lager:debug("Getting history for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Seq, Period, From, To]),
-    Data = trade_history:get_history(Seq, Period, From, To),
+    lager:debug("Getting history for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Security, Period, From, To]),
+    Data = trade_history:get_history(Security, Period, From, To),
     {ok, JSON} = json:encode( lists:map(fun jsonize/1, Data) ),
     {JSON, ReqData, State}.
 

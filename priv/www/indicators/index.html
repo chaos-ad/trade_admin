@@ -9,10 +9,10 @@
     <body>
         <div class="controls">
 
-            <label for="to">Рынок:</label>
+            <label for="markets">Рынок:</label>
             <select id="markets"></select>
 
-            <label for="to">Бумага:</label>
+            <label for="securities">Бумага:</label>
             <select id="securities"></select>
 
             <label for="from">Период:</label>
@@ -21,8 +21,11 @@
             <label for="to">-</label>
             <input type="text" id="to" name="to"/>
 
-            <label for="to">Таймфрейм:</label>
+            <label for="periods">Таймфрейм:</label>
             <select id="periods"></select>
+
+            <label for="indicators">Индикатор:</label>
+            <select id="indicators"></select>
 
             <input type="button" id="go" name="go" value="Go"/>
 
@@ -92,13 +95,18 @@
         $("#periods [value='60']").attr("selected", "selected");
 
         $.each(markets, function (i, market) {
-            var id = market.id;
             $('<option value="' + market.id + '">' + market.title + '</option>').appendTo($("#markets"));
         });
         $("#markets [value='14']").attr("selected", "selected");
 
         $("#go").click(loadIndicator);
         $("#markets").change(chooseMarket).change();
+
+        $.getJSON("/api/indicators/all", function(indicators) {
+            $.each(indicators, function (i, indicator) {
+                $('<option value="' + indicator + '">' + indicator + '</option>').appendTo($("#indicators"));
+            });
+        });
     });
 
     function chooseMarket() {
@@ -141,35 +149,18 @@
         $("#from").datepicker('setDate', from);
     });
 
-    function make_bar(item) {
-        return [item.time * 1000, item.open, item.high, item.low, item.close];
-    };
-
-    function make_val(item) {
-        return [item.time * 1000, item.value];
-    };
-
     function loadIndicator() {
         var query = {
-            seq:      $("#securities").val(),
-            period:   $("#periods").val(),
-            to:       $("#to").val(),
-            from:     $("#from").val()
+            security:  $("#securities").val(),
+            period:    $("#periods").val(),
+            to:        $("#to").val(),
+            from:      $("#from").val()
         };
-        var history_url = "/api/history?" + jQuery.param(query);
-        $.getJSON(history_url, function(data) {
-            chart = new Highcharts.StockChart({
-                chart : {
-                    renderTo : 'charts'
-                },
-                series : [{
-                    data: data.map(make_bar),
-                    name: query.symbol,
-                    type: 'candlestick',
-                    shadow : true,
-                    tooltip : {yDecimals : 2}
-                }]
-            });
+        var data_url = "/api/indicators/" + $("#indicators").val() + "?" + jQuery.param(query);
+
+        $.getJSON(data_url, function(data) {
+            data.chart.renderTo = 'charts';
+            chart = new Highcharts.StockChart(data);
         });
     }
 
