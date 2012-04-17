@@ -3,7 +3,7 @@
 <html>
     <meta charset="utf-8">
     <head>
-        <title>Indicators</title>
+        <title>Charts</title>
     </head>
 
     <body>
@@ -24,15 +24,15 @@
             <label for="periods">Таймфрейм:</label>
             <select id="periods"></select>
 
-            <label for="indicators">Индикатор:</label>
-            <select id="indicators"></select>
+            <label for="charts">График:</label>
+            <select id="charts"></select>
 
             <input type="button" id="go" name="go" value="Go"/>
 
             <hr />
         </div>
 
-        <div id="charts" style="height: 400px; min-width: 600px"></div>
+        <div id="container" style="height: 500px; min-width: 600px"></div>
     </body>
 </html>
 
@@ -102,9 +102,9 @@
         $("#go").click(loadIndicator);
         $("#markets").change(chooseMarket).change();
 
-        $.getJSON("/api/indicators/all", function(indicators) {
-            $.each(indicators, function (i, indicator) {
-                $('<option value="' + indicator + '">' + indicator + '</option>').appendTo($("#indicators"));
+        $.getJSON("/api/charts/all", function(charts) {
+            $.each(charts, function (i, chart) {
+                $('<option value="' + chart + '">' + chart + '</option>').appendTo($("#charts"));
             });
         });
     });
@@ -156,10 +156,11 @@
             to:        $("#to").val(),
             from:      $("#from").val()
         };
-        var data_url = "/api/indicators/" + $("#indicators").val() + "?" + jQuery.param(query);
+        var data_url = "/api/charts/" + $("#charts").val() + "?" + jQuery.param(query);
 
         $.getJSON(data_url, function(data) {
-            data.chart.renderTo = 'charts';
+            data.chart = {};
+            data.chart.renderTo = 'container';
             chart = new Highcharts.StockChart(data);
         });
     }

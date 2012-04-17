@@ -1,4 +1,4 @@
--module(trade_admin_indicators_resource).
+-module(trade_admin_charts_resource).
 -export([init/1, content_types_provided/2, to_json/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -12,8 +12,7 @@ content_types_provided(ReqData, State) ->
 to_json(ReqData, State) ->
     case wrq:path_info(name, ReqData) of
         "all" ->
-            Indicators = all_indicators(),
-            {ok, JSON} = json:encode(Indicators),
+            {ok, JSON} = json:encode(all_charts()),
             {JSON, ReqData, State};
         Name ->
             Args = wrq:req_qs(ReqData),
@@ -22,23 +21,23 @@ to_json(ReqData, State) ->
             From = trade_arg_utils:get_required(Args, "from", date),
             To = trade_arg_utils:get_optional(Args, "to", date),
 
-            lager:debug("Getting indicator ~p for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Name, Security, Period, From, To]),
+            lager:debug("Getting chart ~p for sequrity: ~p, period: ~p, from: ~p, to: ~p", [Name, Security, Period, From, To]),
 
-            Module  = indicator_module(Name),
+            Module  = chart_module(Name),
             History = trade_history:get_history(Security, Period, From, To),
-            Data    = Module:get_data(History, []),
+            Result  = Module:get_data(History, Args),
 
-            {ok, JSON} = json:encode(Data),
+            {ok, JSON} = json:encode(Result),
             {JSON, ReqData, State}
     end.
 
-all_indicators() ->
-    Files = filelib:wildcard("ebin/trade_indicator_*.beam"),
-    Names = lists:map(fun indicator_name/1, Files),
+all_charts() ->
+    Files = filelib:wildcard("ebin/trade_chart_*.beam"),
+    Names = lists:map(fun chart_name/1, Files),
     Names.
 
-indicator_module(Name) ->
-    list_to_atom("trade_indicator_" ++ Name).
+chart_module(Name) ->
+    list_to_atom("trade_chart_" ++ Name).
 
-indicator_name(File) ->
-    {match,[Name]} = re:run(File, ".*trade_indicator_(.*).beam", [{capture, all_but_first, binary}]), Name.
+chart_name(File) ->
+    {match,[Name]} = re:run(File, ".*trade_chart_(.*).beam", [{capture, all_but_first, binary}]), Name.
